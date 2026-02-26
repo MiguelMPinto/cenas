@@ -1,5 +1,11 @@
 ﻿const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycby8wVuCrdDdQojdxRAFu30RtZGtw5wdu8WwMdM8IpiJnd2eKNLunEKSxoTzASohAiLd/exec";
 
+const CLOUDINARY_CLOUD_NAME = "diyjurp0k"; // confirma no dashboard
+const CLOUDINARY_UPLOAD_PRESET = "ai_images_unsigned";
+const CLOUDINARY_BASE_FOLDER = "ai_images";
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+const PHOTO_FIELD_NAMES = ["facePhotos", "fullBodyPhotos", "outfit1Photos", "outfit2Photos", "bg2Photo"];
+
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener("click", (e) => {
     const id = a.getAttribute("href");
@@ -77,10 +83,14 @@ function generateSubmissionId() {
   return `sub_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function countSelectedFiles(formData, fieldName) {
+function getSelectedFiles(formData, fieldName) {
   return formData
     .getAll(fieldName)
-    .filter(v => v instanceof File && v.size > 0).length;
+    .filter(v => v instanceof File && v.size > 0);
+}
+
+function countSelectedFiles(formData, fieldName) {
+  return getSelectedFiles(formData, fieldName).length;
 }
 
 function buildSubmissionPayload(formData) {
@@ -96,7 +106,7 @@ function buildSubmissionPayload(formData) {
     notes: String(formData.get("notes") || "").trim(),
 
     // Metadados para ligar a submissão às fotos no Cloudinary (sem enviar fotos para o Apps Script).
-    cloudinary_folder: `ai_images/${submissionId}`,
+    cloudinary_folder: `${CLOUDINARY_BASE_FOLDER}/${submissionId}`,
     cloudinary_json_public_id: "",
     cloudinary_json_url: "",
 
@@ -107,6 +117,93 @@ function buildSubmissionPayload(formData) {
     outfit2_photos_count: countSelectedFiles(formData, "outfit2Photos"),
     bg2_photos_count: countSelectedFiles(formData, "bg2Photo")
   };
+}
+
+function sanitizeFileBaseName(name) {
+  return String(name || "file")
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 40) || "file";
+}
+
+async function uploadFileToCloudinary(file, { submissionId, fieldName, index }) {
+  const cloudData = new FormData();
+  const safeName = sanitizeFileBaseName(file.name);
+  const publicId = `${submissionId}_${fieldName}_${String(index + 1).padStart(2, "0")}_${safeName}`;
+  const assetFolder = `${CLOUDINARY_BASE_FOLDER}/${submissionId}/${fieldName}`;
+
+  cloudData.append("file", file);
+  cloudData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  cloudData.append("asset_folder", assetFolder);
+  cloudData.append("public_id", publicId);
+
+  const res = await fetch(CLOUDINARY_UPLOAD_URL, {
+    method: "POST",
+    body: cloudData
+  });
+
+  let body = null;
+  try {
+    body = await res.json();
+  } catch {}
+
+  if (!res.ok || body?.error) {
+    const reason = body?.error?.message || `Cloudinary HTTP ${res.status}`;
+    throw new Error(`Falha no upload (${fieldName} / ${file.name}): ${reason}`);
+  }
+
+  return {
+    field: fieldName,
+    name: file.name,
+    bytes: body.bytes,
+    public_id: body.public_id,
+    secure_url: body.secure_url,
+    asset_folder: body.asset_folder || assetFolder
+  };
+}
+
+async function uploadAllPhotosToCloudinary(formData, submissionId, onProgress) {
+  const uploads = {};
+  let total = 0;
+
+  PHOTO_FIELD_NAMES.forEach(fieldName => {
+    uploads[fieldName] = [];
+    total += getSelectedFiles(formData, fieldName).length;
+  });
+
+  let uploaded = 0;
+
+  for (const fieldName of PHOTO_FIELD_NAMES) {
+    const files = getSelectedFiles(formData, fieldName);
+
+    for (let i = 0; i < files.length; i++) {
+      if (typeof onProgress === "function") {
+        onProgress({
+          uploaded,
+          total,
+          next: uploaded + 1,
+          fieldName,
+          fileName: files[i].name
+        });
+      }
+
+      const result = await uploadFileToCloudinary(files[i], {
+        submissionId,
+        fieldName,
+        index: i
+      });
+
+      uploads[fieldName].push(result);
+      uploaded += 1;
+    }
+  }
+
+  if (typeof onProgress === "function") {
+    onProgress({ uploaded, total, done: true });
+  }
+
+  return uploads;
 }
 
 function collectDraft() {
@@ -162,7 +259,27 @@ form?.addEventListener("submit", async (e) => {
   const payload = buildSubmissionPayload(data);
 
   try {
-    setMsg("A enviar pedido...", "info");
+    setMsg("A carregar fotos para Cloudinary...", "info");
+
+    const cloudinaryUploads = await uploadAllPhotosToCloudinary(
+      data,
+      payload.submissionId,
+      ({ next, total, done }) => {
+        if (done) {
+          setMsg("Fotos carregadas. A enviar dados...", "info");
+          return;
+        }
+        setMsg(`A carregar fotos para Cloudinary (${next}/${total})...`, "info");
+      }
+    );
+
+    payload.face_photos_count = cloudinaryUploads.facePhotos?.length || 0;
+    payload.full_body_photos_count = cloudinaryUploads.fullBodyPhotos?.length || 0;
+    payload.outfit1_photos_count = cloudinaryUploads.outfit1Photos?.length || 0;
+    payload.outfit2_photos_count = cloudinaryUploads.outfit2Photos?.length || 0;
+    payload.bg2_photos_count = cloudinaryUploads.bg2Photo?.length || 0;
+
+    console.log("Uploads Cloudinary (debug):", cloudinaryUploads);
     console.log("Payload de texto enviado ao Apps Script:", payload);
 
     const res = await fetch(ENDPOINT_URL, {
