@@ -1,3 +1,5 @@
+﻿const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycby8wVuCrdDdQojdxRAFu30RtZGtw5wdu8WwMdM8IpiJnd2eKNLunEKSxoTzASohAiLd/exec";
+
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener("click", (e) => {
     const id = a.getAttribute("href");
@@ -36,10 +38,10 @@ function handleFileInput(input, previewsEl) {
   clearPreviews(previewsEl);
   files.slice(0, 10).forEach(f => addPreview(previewsEl, f));
 
-  // validação simples por contagem
+  // validaÃ§Ã£o simples por contagem
   let msg = "";
   if (files.length < min) msg = `Precisas de pelo menos ${min} ficheiros.`;
-  if (files.length > max) msg = `Máximo de ${max} ficheiros.`;
+  if (files.length > max) msg = `MÃ¡ximo de ${max} ficheiros.`;
 
   input.setCustomValidity(msg);
 }
@@ -62,13 +64,54 @@ const form = document.getElementById("leadForm");
 const msg = document.getElementById("formMsg");
 const saveDraftBtn = document.getElementById("saveDraft");
 
-function setMsg(text) {
+function setMsg(text, type = "info") {
+  if (!msg) return;
   msg.textContent = text;
+  msg.dataset.state = type;
+}
+
+function generateSubmissionId() {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  return `sub_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function countSelectedFiles(formData, fieldName) {
+  return formData
+    .getAll(fieldName)
+    .filter(v => v instanceof File && v.size > 0).length;
+}
+
+function buildSubmissionPayload(formData) {
+  const submissionId = generateSubmissionId();
+
+  return {
+    submissionId,
+    email: String(formData.get("email") || "").trim(),
+    // Timestamp do cliente; no Apps Script podes continuar a gravar também um timestamp do servidor.
+    timestamp: new Date().toISOString(),
+    bg1: String(formData.get("bg1") || ""),
+    pose: String(formData.get("pose") || ""),
+    notes: String(formData.get("notes") || "").trim(),
+
+    // Metadados para ligar a submissão às fotos no Cloudinary (sem enviar fotos para o Apps Script).
+    cloudinary_folder: `ai_images/${submissionId}`,
+    cloudinary_json_public_id: "",
+    cloudinary_json_url: "",
+
+    // Contagens úteis para controlo/debug no Sheets.
+    face_photos_count: countSelectedFiles(formData, "facePhotos"),
+    full_body_photos_count: countSelectedFiles(formData, "fullBodyPhotos"),
+    outfit1_photos_count: countSelectedFiles(formData, "outfit1Photos"),
+    outfit2_photos_count: countSelectedFiles(formData, "outfit2Photos"),
+    bg2_photos_count: countSelectedFiles(formData, "bg2Photo")
+  };
 }
 
 function collectDraft() {
   const data = new FormData(form);
-  // Só guardamos texto (ficheiros não dá para persistir em V1)
+  // SÃ³ guardamos texto (ficheiros nÃ£o dÃ¡ para persistir em V1)
   return {
     email: data.get("email") || "",
     bg1: data.get("bg1") || "",
@@ -106,21 +149,52 @@ saveDraftBtn?.addEventListener("click", () => {
   } catch {}
 })();
 
-form?.addEventListener("submit", (e) => {
+form?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // força validações HTML5 + custom validity
   if (!form.checkValidity()) {
     form.reportValidity();
-    setMsg("Há campos por preencher/ajustar.");
     return;
   }
 
-  // V1: simula envio
-  setMsg("Pedido submetido (V1). Nesta versão ainda não existe envio para Excel/Drive.");
-  form.reset();
+  const data = new FormData(form);
 
-  // limpar previews
-  ["facePreviews","fullBodyPreviews","outfit1Previews","outfit2Previews","bg2Previews"]
-    .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ""; });
+  const payload = buildSubmissionPayload(data);
+
+  try {
+    setMsg("A enviar pedido...", "info");
+    console.log("Payload de texto enviado ao Apps Script:", payload);
+
+    const res = await fetch(ENDPOINT_URL, {
+      method: "POST",
+      // `text/plain` evita preflight CORS e mantém o corpo em JSON para o Apps Script
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    let json = null;
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      json = await res.json();
+    }
+
+    if (res.ok && json?.success !== false) {
+      setMsg("Pedido enviado com sucesso.", "success");
+      form.reset();
+      localStorage.removeItem("aiimages_draft");
+    } else {
+      const errorText = json?.error || `HTTP ${res.status}`;
+      setMsg("Erro ao enviar: " + errorText, "error");
+      console.error("Erro ao enviar pedido:", { status: res.status, body: json });
+    }
+
+  } catch (err) {
+    setMsg("Erro de rede: " + err.message, "error");
+    console.error("Erro de rede no envio do formulário:", err);
+  }
 });
+
+
+
