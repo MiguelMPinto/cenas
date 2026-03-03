@@ -1,4 +1,4 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Cormorant+Garamond:wght@600;700&display=swap");
 
 :root {
   --navy-900: #0F1C2E;
@@ -34,7 +34,7 @@ body {
   margin: 0;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  font-family: "DM Sans", "Segoe UI", sans-serif;
   color: var(--text);
   background: var(--white);
   line-height: 1.6;
@@ -45,7 +45,7 @@ h2,
 h3 {
   margin: 0 0 12px;
   color: var(--ink);
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
@@ -457,6 +457,193 @@ select:focus {
   margin-top: 8px;
 }
 
+.quick-start {
+  background: linear-gradient(180deg, #FCF8EE 0%, #F8F1E2 100%);
+  border-color: rgba(198, 167, 94, 0.45);
+}
+
+.quick-start h2 {
+  margin-bottom: 8px;
+}
+
+.quick-start-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.quick-start-grid > div {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(198, 167, 94, 0.28);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.progress-card {
+  border-color: rgba(19, 36, 58, 0.18);
+}
+
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#progressPct {
+  font-weight: 800;
+  color: var(--navy-900);
+}
+
+.progress-track {
+  height: 10px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #E5EBF1;
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-500), var(--gold-600));
+  transition: width 0.25s ease;
+}
+
+#progressHint {
+  margin: 10px 0 0;
+}
+
+.step-card {
+  border: 1px solid var(--line);
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.step-head h3 {
+  font-size: 1.08rem;
+  margin: 0;
+}
+
+.step-state {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.step-card.is-done {
+  border-color: rgba(30, 106, 58, 0.35);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F5FCF8 100%);
+}
+
+.step-card.is-done .step-state {
+  color: #1E6A3A;
+}
+
+.anti-lazy-note {
+  margin: 6px 0 0;
+}
+
+/* Form page: premium, leve, com foco em conclusão */
+.form-page {
+  background: #FFFFFF;
+}
+
+.form-page main.section {
+  background: #FFFFFF;
+  padding-top: 64px;
+  padding-bottom: 80px;
+}
+
+.form-page .form-container {
+  max-width: 900px;
+}
+
+.form-page .quick-start,
+.form-page .progress-card {
+  background: #FFFFFF;
+  border: 1px solid #E6EBF1;
+  box-shadow: 0 10px 24px rgba(15, 28, 46, 0.05);
+}
+
+.form-page .quick-start-grid > div {
+  background: #FFFFFF;
+  border: 1px solid #E9EDF3;
+}
+
+.form-page .nice-form {
+  background: #FFFFFF;
+  border: 1px solid #E2E8EF;
+  border-radius: 22px;
+  padding: 28px;
+  gap: 18px;
+  box-shadow: 0 16px 34px rgba(15, 28, 46, 0.08);
+}
+
+.form-page .step-card {
+  border: 1px solid #E7ECF2;
+  border-radius: 16px;
+  padding: 20px;
+  background: #FFFFFF;
+}
+
+.form-page .step-card + .step-card {
+  margin-top: 4px;
+}
+
+.form-page .step-head {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #EDF1F5;
+}
+
+.form-page .field {
+  gap: 10px;
+}
+
+.form-page .actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.form-page .btn-submit {
+  width: 100%;
+  padding: 16px 22px;
+  font-size: 1.04rem;
+  border-radius: 14px;
+  box-shadow: 0 10px 20px rgba(184, 151, 79, 0.26);
+}
+
+.form-page .btn.ghost {
+  width: 100%;
+  text-align: center;
+}
+
+.form-page .anti-lazy-note {
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  .quick-start-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .before-after-section {
   background: var(--white);
 }
@@ -640,3 +827,4 @@ summary {
     padding: 76px 0 60px;
   }
 }
+

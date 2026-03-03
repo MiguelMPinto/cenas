@@ -77,7 +77,10 @@ function wireFile(idInput, idPreviews) {
   const previews = document.getElementById(idPreviews);
   if (!input || !previews) return;
 
-  input.addEventListener("change", () => handleFileInput(input, previews));
+  input.addEventListener("change", () => {
+    handleFileInput(input, previews);
+    refreshFormProgress();
+  });
 }
 
 wireFile("facePhotos", "facePreviews");
@@ -89,6 +92,103 @@ wireFile("bg2Photo", "bg2Previews");
 const form = document.getElementById("leadForm");
 const msg = document.getElementById("formMsg");
 const saveDraftBtn = document.getElementById("saveDraft");
+const progressText = document.getElementById("progressText");
+const progressPct = document.getElementById("progressPct");
+const progressFill = document.getElementById("progressFill");
+const progressHint = document.getElementById("progressHint");
+const progressTrack = document.querySelector(".progress-track");
+
+function isFileInputComplete(id) {
+  const input = document.getElementById(id);
+  if (!input) return false;
+
+  const files = Array.from(input.files || []);
+  const min = Number(input.dataset.min || (input.required ? 1 : 0));
+  const max = Number(input.dataset.max || Number.MAX_SAFE_INTEGER);
+  return files.length >= min && files.length <= max;
+}
+
+function getCompletionMap() {
+  if (!form) return {};
+
+  const email = document.getElementById("email");
+  const bg1 = document.getElementById("bg1");
+  const pose = form.querySelector('input[name="pose"]:checked');
+
+  return {
+    email: Boolean(email?.value?.trim()) && email.checkValidity(),
+    facePhotos: isFileInputComplete("facePhotos"),
+    fullBodyPhotos: isFileInputComplete("fullBodyPhotos"),
+    outfit1Photos: isFileInputComplete("outfit1Photos"),
+    outfit2Photos: isFileInputComplete("outfit2Photos"),
+    bg1: Boolean(bg1?.value),
+    bg2Photo: isFileInputComplete("bg2Photo"),
+    pose: Boolean(pose)
+  };
+}
+
+function getProgressHint(percent) {
+  if (percent <= 0) return "Comeca pelo email e 1o bloco de fotos.";
+  if (percent < 40) return "Bom arranque. Fecha os blocos de fotos para acelerar.";
+  if (percent < 70) return "Ja passaste metade. Falta pouco para concluir.";
+  if (percent < 100) return "Ultimo sprint. So faltam os detalhes finais.";
+  return "Perfeito. Agora e so clicar em Concluir pedido agora.";
+}
+
+function refreshFormProgress() {
+  if (!form || !progressText || !progressPct || !progressFill || !progressTrack || !progressHint) return;
+
+  const status = getCompletionMap();
+  const keys = Object.keys(status);
+  const done = keys.filter((key) => status[key]).length;
+  const total = keys.length || 1;
+  const percent = Math.round((done / total) * 100);
+
+  progressText.textContent = `${done} de ${total} campos obrigatorios completos`;
+  progressPct.textContent = `${percent}%`;
+  progressFill.style.width = `${percent}%`;
+  progressTrack.setAttribute("aria-valuenow", String(percent));
+  progressHint.textContent = getProgressHint(percent);
+
+  document.querySelectorAll("[data-step]").forEach((step) => {
+    const required = String(step.dataset.requiredKeys || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const stepState = step.querySelector(".step-state");
+    if (!required.length) {
+      if (stepState) stepState.textContent = "Opcional";
+      return;
+    }
+
+    const allDone = required.every((key) => status[key]);
+    step.classList.toggle("is-done", allDone);
+    if (stepState) stepState.textContent = allDone ? "Concluido" : "Por fazer";
+  });
+}
+
+function initFormProgress() {
+  if (!form) return;
+
+  form.addEventListener("input", (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.matches('input[type="email"], textarea, select')) {
+      refreshFormProgress();
+    }
+  });
+
+  form.addEventListener("change", (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.matches('input[name="pose"], select, input[type="email"]')) {
+      refreshFormProgress();
+    }
+  });
+
+  refreshFormProgress();
+}
 
 function setMsg(text, type = "info") {
   if (!msg) return;
@@ -256,6 +356,7 @@ saveDraftBtn?.addEventListener("click", () => {
   const draft = collectDraft();
   localStorage.setItem("aiimages_draft", JSON.stringify(draft));
   setMsg("Rascunho guardado (texto apenas).");
+  refreshFormProgress();
 });
 
 (function loadDraft() {
@@ -263,8 +364,11 @@ saveDraftBtn?.addEventListener("click", () => {
     const raw = localStorage.getItem("aiimages_draft");
     if (!raw) return;
     applyDraft(JSON.parse(raw));
+    refreshFormProgress();
   } catch {}
 })();
+
+initFormProgress();
 
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -321,6 +425,7 @@ form?.addEventListener("submit", async (e) => {
       setMsg("Pedido enviado com sucesso.", "success");
       form.reset();
       localStorage.removeItem("aiimages_draft");
+      refreshFormProgress();
     } else {
       const errorText = json?.error || `HTTP ${res.status}`;
       setMsg("Erro ao enviar: " + errorText, "error");
