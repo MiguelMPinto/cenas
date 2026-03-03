@@ -32,7 +32,7 @@
 
 
             <video autoplay muted loop playsinline class="bg-video">
-                <source src="/ressources/video.mp4" type="video/mp4">
+                <source src="ressources/video.mp4" type="video/mp4">
             </video>
 
             <div class="container hero-grid">
@@ -56,13 +56,60 @@
         </section>
 
         <section id="como-funciona" class="section">
-
-            <model-viewer src="/ressources/polaroid_photo_sample.glb" camera-controls  auto-rotate
+            <!--
+            <model-viewer src="ressources/polaroid_photo_sample.glb" camera-controls auto-rotate
                 auto-rotate-delay="1200" interaction-prompt="auto" min-camera-orbit="auto 60deg auto"
-                max-camera-orbit="auto 100deg auto" min-field-of-view="20deg" max-field-of-view="45deg"
-                disable-zoom
+                max-camera-orbit="auto 100deg auto" min-field-of-view="20deg" max-field-of-view="45deg" disable-zoom
                 style="width: 100%; height: 500px;">
-            </model-viewer>
+            </model-viewer> -->
+
+
+            <section class="section before-after-section">
+                <div class="container">
+                    <h2>Resultados Reais: Antes / Depois</h2>
+                    <p class="lead">
+                        Arrasta a linha para comparar a imagem recebida com a versão final entregue.
+                    </p>
+
+                    <div class="ba-grid mt">
+                        <figure class="ba-card">
+                            <div class="ba-slider" style="--pos: 50%;">
+                                <img class="ba-img ba-after" src="ressources/after-1.png" alt="Depois 1">
+                                <div class="ba-before-wrap">
+                                    <img class="ba-img ba-before" src="ressources/before-1.jpeg" alt="Antes 1">
+                                </div>
+                                <div class="ba-handle" aria-hidden="true"></div>
+                                <input class="ba-range" type="range" min="0" max="100" value="50"
+                                    aria-label="Comparar antes e depois 1">
+                            </div>
+                        </figure>
+
+                        <figure class="ba-card">
+                            <div class="ba-slider" style="--pos: 50%;">
+                                <img class="ba-img ba-after" src="ressources/after-2.jpg" alt="Depois 2">
+                                <div class="ba-before-wrap">
+                                    <img class="ba-img ba-before" src="ressources/before-2.jpg" alt="Antes 2">
+                                </div>
+                                <div class="ba-handle" aria-hidden="true"></div>
+                                <input class="ba-range" type="range" min="0" max="100" value="50"
+                                    aria-label="Comparar antes e depois 2">
+                            </div>
+                        </figure>
+
+                        <figure class="ba-card">
+                            <div class="ba-slider" style="--pos: 50%;">
+                                <img class="ba-img ba-after" src="ressources/after-3.jpg" alt="Depois 3">
+                                <div class="ba-before-wrap">
+                                    <img class="ba-img ba-before" src="ressources/before-3.jpg" alt="Antes 3">
+                                </div>
+                                <div class="ba-handle" aria-hidden="true"></div>
+                                <input class="ba-range" type="range" min="0" max="100" value="50"
+                                    aria-label="Comparar antes e depois 3">
+                            </div>
+                        </figure>
+                    </div>
+                </div>
+            </section>
 
 
             <div class="container">

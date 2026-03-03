@@ -16,6 +16,26 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
+function initBeforeAfterSliders() {
+  const ranges = document.querySelectorAll(".ba-range");
+  if (!ranges.length) return;
+
+  ranges.forEach((range) => {
+    const slider = range.closest(".ba-slider");
+    if (!slider) return;
+
+    const update = () => {
+      const value = Number(range.value || 50);
+      slider.style.setProperty("--pos", `${value}%`);
+    };
+
+    range.addEventListener("input", update);
+    update();
+  });
+}
+
+initBeforeAfterSliders();
+
 function clearPreviews(container) {
   container.innerHTML = "";
 }
