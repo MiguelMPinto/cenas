@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuraPic - Step 5</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="form-page" data-step-index="5">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="../index.html">AuraPic</a>
+      <nav class="nav">
+        <a class="btn small" href="step-1.html" aria-current="page">Pedir resultado</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container form-container">
+      <h1>Fotos Profissionais com AI</h1>
+      <p class="lead">Passo 5 de 6. Observacoes finais (opcional).</p>
+
+      <div class="card mt progress-card" aria-live="polite">
+        <div class="progress-head">
+          <strong id="wizardStepLabel">Step 5 de 6</strong>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <p class="muted small" id="progressText">0 de 8 campos obrigatorios completos</p>
+        <p class="muted small" id="progressHint">Ultimo passo antes do resumo.</p>
+      </div>
+
+      <section class="nice-form mt">
+        <div class="step-card">
+          <div class="step-head">
+            <h3>Passo 5 - Observacoes (opcional)</h3>
+          </div>
+          <div class="field">
+            <label for="notes">Observacoes (opcional)</label>
+            <textarea id="notes" name="notes" rows="5" placeholder="Ex: quero 2 imagens finais a sorrir, preferencia de iluminacao, etc."></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn ghost" type="button" data-action="back">Voltar</button>
+          <button class="btn btn-submit" type="button" data-action="next">Seguinte</button>
+        </div>
+
+        <p class="muted small" id="formMsg" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="muted">&copy; 2026 AuraPic</span>
+      <span class="muted">Contacto: (mete aqui email/IG)</span>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+</body>
+</html>
